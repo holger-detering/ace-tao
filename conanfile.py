@@ -40,10 +40,14 @@ include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
         autotools = AutoToolsBuildEnvironment(self)
         autotools.make()
 
-#  def package(self):
-#    cmake = self._configure_cmake()
-#    cmake.install()
-#
+  def package(self):
+    ace_root = f"{self.source_folder}/ACE_wrappers"
+    tao_root = f"{ace_root}/TAO"
+    with tools.environment_append({"ACE_ROOT": ace_root, "TAO_ROOT": tao_root, "INSTALL_PREFIX": self.package_folder}):
+      with tools.chdir(tao_root):
+        autotools = AutoToolsBuildEnvironment(self)
+        autotools.install()
+
 #  def package_info(self):
 #    if self.settings.build_type == "Debug":
 #      self.cpp_info.libs = ["log4cppD"]
