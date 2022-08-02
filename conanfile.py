@@ -19,19 +19,27 @@ of a CORBA 3.x-compliant ORB that supports real-time extensions.
   options = {"shared": [True, False]}
   default_options = {"shared": True}
   generators = "cmake"
-#  exports_sources = "patches/*.patch"
-#  tool_requires = "libtool/[>=2.4.6]"
 
   def source(self):
-    version_underline = self.version.replace(".", "_")
-    url = f"https://github.com/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{version_underline}/ACE+TAO-src-{self.version}.tar.bz2"
+    # url = f"https://github.com/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/ACE+TAO-src-{self.version}.tar.bz2"
+    url = f"http://localhost:5555/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/ACE+TAO-src-{self.version}.tar.bz2"
     tools.get(url, md5="046f004b54e4117a49c63b2f4f99a214", verify=False)
+    tools.save("ACE_wrappers/ace/config.h", """\
+#include "ace/config-linux.h"
+""")
+    tools.save("ACE_wrappers/include/makeinclude/platform_macros.GNU", """\
+include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
+""")
 
-#  def build(self):
-#    self.run("./autogen.sh && ./configure", cwd="log4cpp");
-#    cmake = self._configure_cmake()
-#    cmake.build()
-#
+  def build(self):
+    ace_root = f"{self.source_folder}/ACE_wrappers"
+    tao_root = f"{ace_root}/TAO"
+    with tools.environment_append({"ACE_ROOT": ace_root, "TAO_ROOT": tao_root}):
+      with tools.chdir(tao_root):
+        self.run("$ACE_ROOT/bin/mwc.pl TAO_ACE.mwc -type gnuace")
+        autotools = AutoToolsBuildEnvironment(self)
+        autotools.make()
+
 #  def package(self):
 #    cmake = self._configure_cmake()
 #    cmake.install()
