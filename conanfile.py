@@ -19,15 +19,15 @@ of a CORBA 3.x-compliant ORB that supports real-time extensions.
   settings = "os", "compiler", "build_type", "arch"
   options = {
       "shared": [True, False],
-      "with_zlib": [True, False],
       "with_bzip2": [True, False],
-      "with_xerces": [True, False]
+      "with_xerces": [True, False],
+      "with_zlib": [True, False]
       }
   default_options = {
       "shared": True,
-      "with_zlib": False,
       "with_bzip2": False,
-      "with_xerces": False
+      "with_xerces": False,
+      "with_zlib": False
       }
   generators = "cmake"
 
@@ -43,14 +43,45 @@ of a CORBA 3.x-compliant ORB that supports real-time extensions.
 include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
 """)
 
+  def requirements(self):
+    if self.options.with_bzip2:
+      self.requires("bzip2/1.0.8")
+    if self.options.with_xerces:
+      self.requires("xerces-c/3.2.2")
+    if self.options.with_zlib:
+      self.requires("zlib/1.2.11")
+
+  def _get_make_options(self):
+    options = []
+    if self.options.with_bzip2:
+      options.append("bzip2=1");
+    if self.options.with_xerces:
+      options.append("xerces=1");
+    if self.options.with_zlib:
+      options.append("zlib=1");
+    if self.settings.build_type == "Debug" or self.settings.build_type == "RelWithDebInfo":
+      options.append("debug=1");
+    if self.settings.build_type == "Debug":
+      options.append("optimize=0");
+    return options
+
   def build(self):
     ace_root = f"{self.source_folder}/ACE_wrappers"
     tao_root = f"{ace_root}/TAO"
+    features = ""
+    if self.options.with_bzip2:
+      features += "bzip2=1\n";
+    if self.options.with_xerces:
+      features += "xerces=1\n";
+    if self.options.with_zlib:
+      features += "zlib=1\n";
     with tools.environment_append({"ACE_ROOT": ace_root, "TAO_ROOT": tao_root}):
+      with tools.chdir(ace_root):
+        tools.save("MPC/config/default.features", features)
       with tools.chdir(tao_root):
         self.run("$ACE_ROOT/bin/mwc.pl TAO_ACE.mwc -type gnuace")
         autotools = AutoToolsBuildEnvironment(self)
-        autotools.make()
+        autotools.make(self._get_make_options())
 
   def package(self):
     ace_root = f"{self.source_folder}/ACE_wrappers"
@@ -58,7 +89,7 @@ include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
     with tools.environment_append({"ACE_ROOT": ace_root, "TAO_ROOT": tao_root, "INSTALL_PREFIX": self.package_folder}):
       with tools.chdir(tao_root):
         autotools = AutoToolsBuildEnvironment(self)
-        autotools.install()
+        autotools.install(self._get_make_options())
 
   def package_info(self):
     self.cpp_info.names["cmake_find_package"] = "ace+tao"
@@ -80,6 +111,15 @@ include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
     self.cpp_info.components["ACE"].names["cmake_find_package"] = "ACE"
     self.cpp_info.components["ACE"].libs = ["ACE"]
     self.cpp_info.components["ACE"].system_libs = ["dl", "rt"]
+    if self.options.with_bzip2:
+      self.cpp_info.components["ACE"].system_libs.append("bz2")
+      self.cpp_info.components["ACE"].requires.append("bzip2::bzip2")
+    if self.options.with_xerces:
+      self.cpp_info.components["ACE"].system_libs.append("pthread")
+      self.cpp_info.components["ACE"].requires.append("xerces-c::xerces-c")
+    if self.options.with_zlib:
+      self.cpp_info.components["ACE"].system_libs.append("z")
+      self.cpp_info.components["ACE"].requires.append("zlib::zlib")
     self.cpp_info.components["ACE_RMCast"].names["cmake_find_package"] = "ACE_RMCast"
     self.cpp_info.components["ACE_RMCast"].libs = ["ACE_RMCast"]
     self.cpp_info.components["ACE_RMCast"].requires = ["ACE"]
@@ -92,6 +132,10 @@ include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
     self.cpp_info.components["ACEXML"].names["cmake_find_package"] = "ACEXML"
     self.cpp_info.components["ACEXML"].libs = ["ACEXML"]
     self.cpp_info.components["ACEXML"].requires = ["ACE"]
+    if self.options.with_xerces:
+      self.cpp_info.components["ACE_XML_Utils"].names["cmake_find_package"] = "ACE_XML_Utils"
+      self.cpp_info.components["ACE_XML_Utils"].libs = ["ACE_XML_Utils"]
+      self.cpp_info.components["ACE_XML_Utils"].requires = ["ACE", "xerces-c::xerces-c"]
     self.cpp_info.components["ACEXML_XML_Svc_Conf_Parser"].names["cmake_find_package"] = "ACEXML_XML_Svc_Conf_Parser"
     self.cpp_info.components["ACEXML_XML_Svc_Conf_Parser"].libs = ["ACEXML_XML_Svc_Conf_Parser"]
     self.cpp_info.components["ACEXML_XML_Svc_Conf_Parser"].requires = ["ACEXML_Parser"]
@@ -107,6 +151,10 @@ include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
     self.cpp_info.components["TAO_BiDirGIOP"].names["cmake_find_package"] = "TAO_BiDirGIOP"
     self.cpp_info.components["TAO_BiDirGIOP"].libs = ["TAO_BiDirGIOP"]
     self.cpp_info.components["TAO_BiDirGIOP"].requires = ["TAO_PI", "TAO_CodecFactory", "TAO_AnyTypeCode", "TAO"]
+    if self.options.with_bzip2:
+      self.cpp_info.components["TAO_Bzip2Compressor"].names["cmake_find_package"] = "TAO_Bzip2Compressor"
+      self.cpp_info.components["TAO_Bzip2Compressor"].libs = ["TAO_Bzip2Compressor"]
+      self.cpp_info.components["TAO_Bzip2Compressor"].requires = ["TAO_Compression", "bzip2::bzip2"]
     self.cpp_info.components["TAO_CodecFactory"].names["cmake_find_package"] = "TAO_CodecFactory"
     self.cpp_info.components["TAO_CodecFactory"].libs = ["TAO_CodecFactory"]
     self.cpp_info.components["TAO_CodecFactory"].requires = ["TAO_AnyTypeCode", "TAO"]
@@ -332,3 +380,7 @@ include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
     self.cpp_info.components["TAO_ZIOP"].names["cmake_find_package"] = "TAO_ZIOP"
     self.cpp_info.components["TAO_ZIOP"].libs = ["TAO_ZIOP"]
     self.cpp_info.components["TAO_ZIOP"].requires = ["TAO_PI", "TAO_CodecFactory", "TAO_AnyTypeCode", "TAO"]
+    if self.options.with_zlib:
+      self.cpp_info.components["TAO_ZlibCompressor"].names["cmake_find_package"] = "TAO_ZlibCompressor"
+      self.cpp_info.components["TAO_ZlibCompressor"].libs = ["TAO_ZlibCompressor"]
+      self.cpp_info.components["TAO_ZlibCompressor"].requires = ["TAO_Compression", "zlib::zlib"]
