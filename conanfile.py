@@ -1,4 +1,5 @@
 from conans import ConanFile, AutoToolsBuildEnvironment, tools
+import os
 
 class Log4cppConan(ConanFile):
   name = "ace+tao"
@@ -384,3 +385,9 @@ include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
       self.cpp_info.components["TAO_ZlibCompressor"].names["cmake_find_package"] = "TAO_ZlibCompressor"
       self.cpp_info.components["TAO_ZlibCompressor"].libs = ["TAO_ZlibCompressor"]
       self.cpp_info.components["TAO_ZlibCompressor"].requires = ["TAO_Compression", "zlib::zlib"]
+    bin_path = os.path.join(self.package_folder, "bin")
+    self.output.info("Appending PATH environment variable: {}".format(bin_path))
+    self.env_info.PATH.append(bin_path)
+    lib_path = os.path.join(self.package_folder, "lib")
+    self.output.info("Appending LD_LIBRARY_PATH environment variable: {}".format(lib_path))
+    self.env_info.LD_LIBRARY_PATH.append(lib_path)
