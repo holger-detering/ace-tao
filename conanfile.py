@@ -391,3 +391,5 @@ include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
     lib_path = os.path.join(self.package_folder, "lib")
     self.output.info("Appending LD_LIBRARY_PATH environment variable: {}".format(lib_path))
     self.env_info.LD_LIBRARY_PATH.append(lib_path)
+    self.output.info("Setting ACE_ROOT: {}".format(self.package_folder))
+    self.env_info.ACE_ROOT = self.package_folder
