@@ -159,6 +159,9 @@ include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
     self.cpp_info.components["TAO_CodecFactory"].names["cmake_find_package"] = "TAO_CodecFactory"
     self.cpp_info.components["TAO_CodecFactory"].libs = ["TAO_CodecFactory"]
     self.cpp_info.components["TAO_CodecFactory"].requires = ["TAO_AnyTypeCode", "TAO"]
+    self.cpp_info.components["TAO_Codeset"].names["cmake_find_package"] = "TAO_Codeset"
+    self.cpp_info.components["TAO_Codeset"].libs = ["TAO_Codeset"]
+    self.cpp_info.components["TAO_Codeset"].requires = ["TAO"]
     self.cpp_info.components["TAO_Compression"].names["cmake_find_package"] = "TAO_Compression"
     self.cpp_info.components["TAO_Compression"].libs = ["TAO_Compression"]
     self.cpp_info.components["TAO_Compression"].requires = ["TAO_CodecFactory", "TAO_AnyTypeCode", "TAO"]
