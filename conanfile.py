@@ -3,11 +3,11 @@ import os
 
 class Log4cppConan(ConanFile):
   name = "ace+tao"
-#  version = "6.5.17"
-  version = "7.0.8"
+  version = "7.0.9"
   license = "DOC"
-  author = "Douglas C. Schmidt <d.schmidt@vanderbilt.edu>"
-  url = "https://www.dre.vanderbilt.edu/TAO"
+  author = "Holger Detering <freelance@detering-springhoe.de>"
+  url = "https://github.com/holger-detering/ace+tao"
+  homepage = "https://www.dre.vanderbilt.edu/TAO"
   description = """\
 The ADAPTIVE Communication Environment (ACE) is an object-oriented
 (OO) toolkit that implements fundamental design patterns for
@@ -33,10 +33,9 @@ of a CORBA 3.x-compliant ORB that supports real-time extensions.
   generators = "cmake"
 
   def source(self):
-    # url = f"https://github.com/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/ACE+TAO-src-{self.version}.tar.bz2"
-    url = f"http://localhost:5555/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/ACE+TAO-src-{self.version}.tar.bz2"
-    # tools.get(url, md5="046f004b54e4117a49c63b2f4f99a214", verify=False)
-    tools.get(url, md5="c2b683258f9fdcf72f792048af66317a", verify=False)
+    url = f"https://github.com/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/ACE+TAO-src-{self.version}.tar.bz2"
+    # url = f"http://localhost:5555/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/ACE+TAO-src-{self.version}.tar.bz2"
+    tools.get(url, md5="69a05dd91a8875b6f40e72ec23b64535", verify=False)
     tools.save("ACE_wrappers/ace/config.h", """\
 #include "ace/config-linux.h"
 """)
