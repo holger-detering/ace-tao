@@ -19,23 +19,32 @@ of a CORBA 3.x-compliant ORB that supports real-time extensions.
   topics = ("c++", "CORBA")
   settings = "os", "compiler", "build_type", "arch"
   options = {
-      "shared": [True, False],
       "with_bzip2": [True, False],
       "with_xerces": [True, False],
       "with_zlib": [True, False]
       }
   default_options = {
-      "shared": True,
       "with_bzip2": False,
       "with_xerces": False,
       "with_zlib": False
       }
   generators = "cmake"
+  exports_sources = f"sources/ACE+TAO-src-{version}.tar.bz2"
+
+  def _fetch_sources(self):
+    tarball_name = f"ACE+TAO-src-{self.version}.tar.bz2"
+    url = f"https://github.com/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/" + tarball_name
+    # url = f"http://localhost:5555/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/" + tarball_name
+    source_path = "sources/" + tarball_name
+    checksums = self.conan_data["checksums"][self.version][0]
+    if os.path.isfile(source_path):
+      tools.check_md5(source_path, checksums["md5"])
+      tools.unzip(source_path)
+    else:
+      tools.get(url, md5=checksums["md5"], verify=False)
 
   def source(self):
-    url = f"https://github.com/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/ACE+TAO-src-{self.version}.tar.bz2"
-    # url = f"http://localhost:5555/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/ACE+TAO-src-{self.version}.tar.bz2"
-    tools.get(url, md5="69a05dd91a8875b6f40e72ec23b64535", verify=False)
+    self._fetch_sources()
     tools.save("ACE_wrappers/ace/config.h", """\
 #include "ace/config-linux.h"
 """)
