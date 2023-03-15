@@ -1,12 +1,18 @@
+from conan import ConanFile
+from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.build import can_run
+
 import os
 
-from conans import ConanFile, CMake, tools
-
-# TODO: generator? cmake...
 class Log4cppTestConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    generators = "cmake_find_package"
-    requires = "ace+tao/6.5.17@"
+    generators = "CMakeDeps", "CMakeToolchain"
+
+    def requirements(self):
+        self.requires(self.tested_reference_str)
+
+    def layout(self):
+        cmake_layout(self)
 
     def build(self):
         cmake = CMake(self)
@@ -14,5 +20,6 @@ class Log4cppTestConan(ConanFile):
         cmake.build()
 
     def test(self):
-        if not tools.cross_building(self):
-            self.run(".%spackage_test" % os.sep)
+        if not can_run(self):
+            cmd = os.path.join(self.cpp.build.bindir, "package_test")
+            self.run(cmd, env="conanrun")

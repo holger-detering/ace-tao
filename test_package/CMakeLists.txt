@@ -6,9 +6,7 @@ set(CMAKE_CXX_STANDARD 17
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-
-find_package(ace+tao REQUIRED)
+find_package(ace+tao CONFIG REQUIRED)
 
 add_executable(package_test)
 target_sources(package_test PRIVATE test_ace_tao_package.cpp)

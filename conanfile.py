@@ -1,4 +1,8 @@
-from conans import ConanFile, AutoToolsBuildEnvironment, tools
+from conan import ConanFile
+from conan.tools.files import chdir, check_md5, get, save, unzip
+from conan.tools.gnu import AutotoolsDeps, AutotoolsToolchain, Autotools
+from conan.tools.env import Environment
+
 import os
 
 class Log4cppConan(ConanFile):
@@ -28,27 +32,26 @@ of a CORBA 3.x-compliant ORB that supports real-time extensions.
       "with_xerces": False,
       "with_zlib": False
       }
-  generators = "cmake"
   exports_sources = f"sources/ACE+TAO-src-{version}.tar.bz2"
 
   def _fetch_sources(self):
     tarball_name = f"ACE+TAO-src-{self.version}.tar.bz2"
     url = f"https://github.com/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/" + tarball_name
     # url = f"http://localhost:5555/DOCGroup/ACE_TAO/releases/download/ACE%2BTAO-{self.version.replace('.', '_')}/" + tarball_name
-    source_path = "sources/" + tarball_name
+    source_path = os.path.join("sources", tarball_name);
     checksums = self.conan_data["checksums"][self.version][0]
     if os.path.isfile(source_path):
-      tools.check_md5(source_path, checksums["md5"])
-      tools.unzip(source_path)
+      check_md5(self, source_path, checksums["md5"])
+      unzip(self, source_path)
     else:
-      tools.get(url, md5=checksums["md5"], verify=False)
+      get(self, url, md5=checksums["md5"], verify=False)
 
   def source(self):
     self._fetch_sources()
-    tools.save("ACE_wrappers/ace/config.h", """\
+    save(self, "ACE_wrappers/ace/config.h", """\
 #include "ace/config-linux.h"
 """)
-    tools.save("ACE_wrappers/include/makeinclude/platform_macros.GNU", """\
+    save(self, "ACE_wrappers/include/makeinclude/platform_macros.GNU", """\
 include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
 """)
 
@@ -60,45 +63,45 @@ include $(ACE_ROOT)/include/makeinclude/platform_linux.GNU
     if self.options.with_zlib:
       self.requires("zlib/1.2.11")
 
-  def _get_make_options(self):
-    options = []
+  def generate(self):
+    self.ace_root = os.path.join(self.source_folder, "ACE_wrappers")
+    self.tao_root = os.path.join(self.ace_root, "TAO")
+    ad = AutotoolsDeps(self)
+    ad.environment.define("ACE_ROOT", self.ace_root)
+    ad.environment.define("TAO_ROOT", self.tao_root)
+    ad.environment.define("INSTALL_PREFIX", "/")
+    ad.generate()
+    tc = AutotoolsToolchain(self)
     if self.options.with_bzip2:
-      options.append("bzip2=1");
+      tc.make_args.append("bzip2=1")
     if self.options.with_xerces:
-      options.append("xerces=1");
+      tc.make_args.append("xerces=1")
     if self.options.with_zlib:
-      options.append("zlib=1");
+      tc.make_args.append("zlib=1")
     if self.settings.build_type == "Debug" or self.settings.build_type == "RelWithDebInfo":
-      options.append("debug=1");
+      tc.make_args.append("debug=1")
     if self.settings.build_type == "Debug":
-      options.append("optimize=0");
-    return options
+      tc.make_args.append("optimize=0")
+    tc.generate()
 
   def build(self):
-    ace_root = f"{self.source_folder}/ACE_wrappers"
-    tao_root = f"{ace_root}/TAO"
     features = ""
     if self.options.with_bzip2:
-      features += "bzip2=1\n";
+      features += "bzip2=1\n"
     if self.options.with_xerces:
-      features += "xerces=1\n";
+      features += "xerces=1\n"
     if self.options.with_zlib:
-      features += "zlib=1\n";
-    with tools.environment_append({"ACE_ROOT": ace_root, "TAO_ROOT": tao_root}):
-      with tools.chdir(ace_root):
-        tools.save("MPC/config/default.features", features)
-      with tools.chdir(tao_root):
-        self.run("$ACE_ROOT/bin/mwc.pl TAO_ACE.mwc -type gnuace")
-        autotools = AutoToolsBuildEnvironment(self)
-        autotools.make(self._get_make_options())
+      features += "zlib=1\n"
+    save(self, os.path.join(self.ace_root, "MPC/config/default.features"), features)
+    with chdir(self, self.tao_root):
+      self.run("$ACE_ROOT/bin/mwc.pl TAO_ACE.mwc -type gnuace")
+      autotools = Autotools(self)
+      autotools.make()
 
   def package(self):
-    ace_root = f"{self.source_folder}/ACE_wrappers"
-    tao_root = f"{ace_root}/TAO"
-    with tools.environment_append({"ACE_ROOT": ace_root, "TAO_ROOT": tao_root, "INSTALL_PREFIX": self.package_folder}):
-      with tools.chdir(tao_root):
-        autotools = AutoToolsBuildEnvironment(self)
-        autotools.install(self._get_make_options())
+    with chdir(self, self.tao_root):
+      autotools = Autotools(self)
+      autotools.install()
 
   def package_info(self):
     self.cpp_info.names["cmake_find_package"] = "ace+tao"
